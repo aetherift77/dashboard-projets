@@ -1,17 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl =
+  "https://pbeonzeklchqtjvtmtfd.supabase.co";
 
-// singleton global (évite duplication en dev)
-const globalForSupabase = globalThis as unknown as {
-  supabase?: ReturnType<typeof createClient>;
-};
+const supabaseKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase =
-  globalForSupabase.supabase ??
-  createClient(supabaseUrl, supabaseAnonKey);
-
-if (process.env.NODE_ENV !== "production") {
-  globalForSupabase.supabase = supabase;
-}
+// 🔥 IMPORTANT: disable strict typing
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseKey,
+  {
+    db: {
+      schema: "public",
+    },
+  }
+);
