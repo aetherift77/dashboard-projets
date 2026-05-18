@@ -7,20 +7,34 @@ export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [nom, setNom] = useState("");
-  const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [editingId, setEditingId] =
+    useState<number | null>(null);
 
-  const [priorite, setPriorite] = useState("Medium");
-  const [statut, setStatut] = useState("idee");
+  // CREATE FORM
+  const [nom, setNom] = useState("");
+  const [description, setDescription] =
+    useState("");
+
+  const [deadline, setDeadline] =
+    useState("");
+
+  const [priorite, setPriorite] =
+    useState("Medium");
+
+  const [statut, setStatut] =
+    useState("idee");
+
   const [localisation, setLocalisation] =
     useState("indetermine");
 
+  // FETCH
   async function fetchProjects() {
     const { data } = await supabase
       .from("projets")
       .select("*")
-      .order("date_og", { ascending: false });
+      .order("date_og", {
+        ascending: false,
+      });
 
     setProjects(data || []);
     setLoading(false);
@@ -30,6 +44,7 @@ export default function Home() {
     fetchProjects();
   }, []);
 
+  // CREATE
   async function addProject() {
     if (!nom) return;
 
@@ -55,6 +70,7 @@ export default function Home() {
     fetchProjects();
   }
 
+  // DELETE
   async function deleteProject(id: number) {
     await supabase
       .from("projets")
@@ -64,8 +80,45 @@ export default function Home() {
     fetchProjects();
   }
 
+  // UPDATE
+  async function updateProject(project: any) {
+    await supabase
+      .from("projets")
+      .update({
+        nom: project.nom,
+        description: project.description,
+        statut: project.statut,
+        priorite: project.priorite,
+        localisation: project.localisation,
+        deadline: project.deadline,
+      } as any)
+      .eq("id_projet", project.id_projet);
+
+    setEditingId(null);
+
+    fetchProjects();
+  }
+
+  // HANDLE INLINE UPDATE
+  function updateLocalProject(
+    id: number,
+    field: string,
+    value: any
+  ) {
+    const updated = [...projects];
+
+    const index = updated.findIndex(
+      (p) => p.id_projet === id
+    );
+
+    updated[index][field] = value;
+
+    setProjects(updated);
+  }
+
   return (
     <div className="space-y-8">
+      {/* HEADER */}
       <div>
         <h1 className="text-4xl font-bold">
           📊 Dashboard
@@ -76,7 +129,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* FORM */}
+      {/* CREATE FORM */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
         <h2 className="text-xl font-semibold mb-4">
           Nouveau projet
@@ -87,47 +140,71 @@ export default function Home() {
             className="bg-zinc-800 p-3 rounded-xl"
             placeholder="Nom"
             value={nom}
-            onChange={(e) => setNom(e.target.value)}
+            onChange={(e) =>
+              setNom(e.target.value)
+            }
           />
 
           <input
             className="bg-zinc-800 p-3 rounded-xl"
             placeholder="Description"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) =>
+              setDescription(e.target.value)
+            }
           />
 
           <input
             type="date"
             className="bg-zinc-800 p-3 rounded-xl"
             value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
+            onChange={(e) =>
+              setDeadline(e.target.value)
+            }
           />
 
           {/* PRIORITE */}
           <select
             value={priorite}
-            onChange={(e) => setPriorite(e.target.value)}
+            onChange={(e) =>
+              setPriorite(e.target.value)
+            }
             className="bg-zinc-800 p-3 rounded-xl"
           >
             <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
+            <option value="Medium">
+              Medium
+            </option>
             <option value="High">High</option>
           </select>
 
           {/* STATUT */}
           <select
             value={statut}
-            onChange={(e) => setStatut(e.target.value)}
+            onChange={(e) =>
+              setStatut(e.target.value)
+            }
             className="bg-zinc-800 p-3 rounded-xl"
           >
             <option value="idee">Idée</option>
-            <option value="definition">Définition</option>
-            <option value="conception">Conception</option>
-            <option value="planification">Planification</option>
-            <option value="construction">Construction</option>
-            <option value="operationnel">Opérationnel</option>
-            <option value="maintenance">Maintenance</option>
+            <option value="definition">
+              Définition
+            </option>
+            <option value="conception">
+              Conception
+            </option>
+            <option value="planification">
+              Planification
+            </option>
+            <option value="construction">
+              Construction
+            </option>
+            <option value="operationnel">
+              Opérationnel
+            </option>
+            <option value="maintenance">
+              Maintenance
+            </option>
           </select>
 
           {/* LOCALISATION */}
@@ -141,9 +218,18 @@ export default function Home() {
             <option value="indetermine">
               Indéterminé
             </option>
-            <option value="maison">Maison</option>
-            <option value="apart">Appartement</option>
-            <option value="autre">Autre</option>
+
+            <option value="maison">
+              Maison
+            </option>
+
+            <option value="apart">
+              Appartement
+            </option>
+
+            <option value="autre">
+              Autre
+            </option>
           </select>
         </div>
 
@@ -167,46 +253,200 @@ export default function Home() {
               ID #{p.id_projet}
             </div>
 
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-bold">
-                  {p.nom}
-                </h2>
+            {/* TITLE */}
+            {editingId === p.id_projet ? (
+              <input
+                value={p.nom}
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "nom",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full"
+              />
+            ) : (
+              <h2 className="text-xl font-bold">
+                {p.nom}
+              </h2>
+            )}
 
-                <p className="text-zinc-400 mt-2">
-                  {p.description}
-                </p>
-              </div>
+            {/* DESCRIPTION */}
+            {editingId === p.id_projet ? (
+              <textarea
+                value={p.description || ""}
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "description",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full mt-3"
+              />
+            ) : (
+              <p className="text-zinc-400 mt-2">
+                {p.description}
+              </p>
+            )}
+
+            {/* EDITABLE SELECTS */}
+            <div className="mt-5 space-y-3">
+              <select
+                value={p.statut}
+                disabled={
+                  editingId !== p.id_projet
+                }
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "statut",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full"
+              >
+                <option value="idee">
+                  Idée
+                </option>
+
+                <option value="definition">
+                  Définition
+                </option>
+
+                <option value="conception">
+                  Conception
+                </option>
+
+                <option value="planification">
+                  Planification
+                </option>
+
+                <option value="construction">
+                  Construction
+                </option>
+
+                <option value="operationnel">
+                  Opérationnel
+                </option>
+
+                <option value="maintenance">
+                  Maintenance
+                </option>
+              </select>
+
+              <select
+                value={p.priorite}
+                disabled={
+                  editingId !== p.id_projet
+                }
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "priorite",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full"
+              >
+                <option value="Low">
+                  Low
+                </option>
+
+                <option value="Medium">
+                  Medium
+                </option>
+
+                <option value="High">
+                  High
+                </option>
+              </select>
+
+              <select
+                value={p.localisation}
+                disabled={
+                  editingId !== p.id_projet
+                }
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "localisation",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full"
+              >
+                <option value="indetermine">
+                  Indéterminé
+                </option>
+
+                <option value="maison">
+                  Maison
+                </option>
+
+                <option value="apart">
+                  Appartement
+                </option>
+
+                <option value="autre">
+                  Autre
+                </option>
+              </select>
+
+              {/* DEADLINE */}
+              <input
+                type="date"
+                disabled={
+                  editingId !== p.id_projet
+                }
+                value={p.deadline || ""}
+                onChange={(e) =>
+                  updateLocalProject(
+                    p.id_projet,
+                    "deadline",
+                    e.target.value
+                  )
+                }
+                className="bg-zinc-800 p-2 rounded-lg w-full"
+              />
+            </div>
+
+            {/* BUTTONS */}
+            <div className="mt-5 flex gap-3">
+              {editingId === p.id_projet ? (
+                <button
+                  onClick={() =>
+                    updateProject(p)
+                  }
+                  className="bg-green-500 px-4 py-2 rounded-xl"
+                >
+                  Sauvegarder
+                </button>
+              ) : (
+                <button
+                  onClick={() =>
+                    setEditingId(
+                      p.id_projet
+                    )
+                  }
+                  className="bg-blue-500 px-4 py-2 rounded-xl"
+                >
+                  Modifier
+                </button>
+              )}
 
               <button
                 onClick={() =>
-                  deleteProject(p.id_projet)
+                  deleteProject(
+                    p.id_projet
+                  )
                 }
-                className="text-red-400"
+                className="bg-red-500 px-4 py-2 rounded-xl"
               >
-                ✕
+                Supprimer
               </button>
             </div>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
-                📌 {p.statut}
-              </span>
-
-              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
-                ⚡ {p.priorite}
-              </span>
-
-              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
-                📍 {p.localisation}
-              </span>
-            </div>
-
-            {p.deadline && (
-              <div className="mt-4 text-sm text-orange-400">
-                ⏳ Deadline : {p.deadline}
-              </div>
-            )}
           </div>
         ))}
       </div>

@@ -5,22 +5,38 @@ import { supabase } from "@/lib/supabase";
 
 export default function InventairePage() {
   const [items, setItems] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
 
   const [nom, setNom] = useState("");
   const [description, setDescription] =
     useState("");
+
   const [nb, setNb] = useState(1);
 
-  async function fetchItems() {
-    const { data } = await supabase
-      .from("inventaire")
-      .select("*");
+  const [idProjet, setIdProjet] =
+    useState("");
 
-    setItems(data || []);
+  async function fetchData() {
+    const { data: itemsData } = await supabase
+      .from("inventaire")
+      .select(`
+        *,
+        projets (
+          nom
+        )
+      `);
+
+    const { data: projectsData } =
+      await supabase
+        .from("projets")
+        .select("*");
+
+    setItems(itemsData || []);
+    setProjects(projectsData || []);
   }
 
   useEffect(() => {
-    fetchItems();
+    fetchData();
   }, []);
 
   async function addItem() {
@@ -32,13 +48,15 @@ export default function InventairePage() {
         nom,
         description,
         nb,
+        id_projet: idProjet || null,
       } as any);
 
     setNom("");
     setDescription("");
     setNb(1);
+    setIdProjet("");
 
-    fetchItems();
+    fetchData();
   }
 
   return (
@@ -47,8 +65,9 @@ export default function InventairePage() {
         📦 Inventaire
       </h1>
 
+      {/* FORM */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <input
             className="bg-zinc-800 p-3 rounded-xl"
             placeholder="Nom"
@@ -73,6 +92,28 @@ export default function InventairePage() {
               setNb(Number(e.target.value))
             }
           />
+
+          {/* LINK PROJECT */}
+          <select
+            value={idProjet}
+            onChange={(e) =>
+              setIdProjet(e.target.value)
+            }
+            className="bg-zinc-800 p-3 rounded-xl"
+          >
+            <option value="">
+              Aucun projet
+            </option>
+
+            {projects.map((p) => (
+              <option
+                key={p.id_projet}
+                value={p.id_projet}
+              >
+                #{p.id_projet} — {p.nom}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button
@@ -83,6 +124,7 @@ export default function InventairePage() {
         </button>
       </div>
 
+      {/* ITEMS */}
       <div className="grid gap-4">
         {items.map((i) => (
           <div
@@ -104,6 +146,12 @@ export default function InventairePage() {
             <div className="mt-3">
               Quantité : {i.nb}
             </div>
+
+            {i.projets && (
+              <div className="mt-3 text-blue-400">
+                🔗 Projet : {i.projets.nom}
+              </div>
+            )}
           </div>
         ))}
       </div>
