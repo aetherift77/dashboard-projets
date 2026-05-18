@@ -7,13 +7,11 @@ export default function Home() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // form state
   const [nom, setNom] = useState("");
   const [description, setDescription] = useState("");
   const [statut, setStatut] = useState("idee");
   const [priorite, setPriorite] = useState("Medium");
 
-  // filters
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
@@ -41,7 +39,7 @@ export default function Home() {
         description,
         statut,
         priorite,
-      },
+      } as any, // ✅ FIX VERCEL
     ]);
 
     setNom("");
