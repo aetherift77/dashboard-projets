@@ -33,16 +33,18 @@ export default function Home() {
   async function addProject() {
     if (!nom) return;
 
-    await supabase
-      .from("projets" as any)
-      .insert([
-        {
-          nom,
-          description,
-          statut,
-          priorite,
-        },
-      ]);
+    const { error } = await supabase
+      .from("projets")
+      .insert({
+        nom,
+        description,
+        statut,
+        priorite,
+      } as any);
+
+    if (error) {
+      console.error("Insert error:", error);
+    }
 
     setNom("");
     setDescription("");
@@ -51,7 +53,11 @@ export default function Home() {
   }
 
   async function deleteProject(id: number) {
-    await supabase.from("projets").delete().eq("id_projet", id);
+    await supabase
+      .from("projets")
+      .delete()
+      .eq("id_projet", id);
+
     fetchProjects();
   }
 
@@ -61,14 +67,27 @@ export default function Home() {
   });
 
   return (
-    <main style={{ padding: 30, background: "#0f0f0f", minHeight: "100vh", color: "white" }}>
-      
+    <main
+      style={{
+        padding: 30,
+        background: "#0f0f0f",
+        minHeight: "100vh",
+        color: "white",
+      }}
+    >
       <h1 style={{ fontSize: 28, marginBottom: 20 }}>
         📊 Dashboard Projets
       </h1>
 
       {/* CREATE PROJECT */}
-      <div style={{ marginBottom: 30, padding: 15, border: "1px solid #333", borderRadius: 10 }}>
+      <div
+        style={{
+          marginBottom: 30,
+          padding: 15,
+          border: "1px solid #333",
+          borderRadius: 10,
+        }}
+      >
         <h3>➕ Ajouter un projet</h3>
 
         <input
@@ -94,7 +113,10 @@ export default function Home() {
           <option value="operationnel">Opérationnel</option>
         </select>
 
-        <select value={priorite} onChange={(e) => setPriorite(e.target.value)}>
+        <select
+          value={priorite}
+          onChange={(e) => setPriorite(e.target.value)}
+        >
           <option value="Low">Low</option>
           <option value="Medium">Medium</option>
           <option value="High">High</option>
@@ -109,8 +131,12 @@ export default function Home() {
       <div style={{ marginBottom: 20 }}>
         <button onClick={() => setFilter("all")}>Tous</button>
         <button onClick={() => setFilter("idee")}>Idée</button>
-        <button onClick={() => setFilter("planification")}>Planification</button>
-        <button onClick={() => setFilter("construction")}>Construction</button>
+        <button onClick={() => setFilter("planification")}>
+          Planification
+        </button>
+        <button onClick={() => setFilter("construction")}>
+          Construction
+        </button>
       </div>
 
       {loading && <p>Chargement...</p>}
