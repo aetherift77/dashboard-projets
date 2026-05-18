@@ -11,6 +11,11 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
 
+  const [priorite, setPriorite] = useState("Medium");
+  const [statut, setStatut] = useState("idee");
+  const [localisation, setLocalisation] =
+    useState("indetermine");
+
   async function fetchProjects() {
     const { data } = await supabase
       .from("projets")
@@ -28,13 +33,20 @@ export default function Home() {
   async function addProject() {
     if (!nom) return;
 
-    await supabase.from("projets").insert({
-      nom,
-      description,
-      statut: "idee",
-      priorite: "Medium",
-      deadline,
-    } as any);
+    const { error } = await supabase
+      .from("projets")
+      .insert({
+        nom,
+        description,
+        deadline,
+        priorite,
+        statut,
+        localisation,
+      } as any);
+
+    if (error) {
+      console.error(error);
+    }
 
     setNom("");
     setDescription("");
@@ -70,7 +82,7 @@ export default function Home() {
           Nouveau projet
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           <input
             className="bg-zinc-800 p-3 rounded-xl"
             placeholder="Nom"
@@ -91,6 +103,48 @@ export default function Home() {
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
           />
+
+          {/* PRIORITE */}
+          <select
+            value={priorite}
+            onChange={(e) => setPriorite(e.target.value)}
+            className="bg-zinc-800 p-3 rounded-xl"
+          >
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+
+          {/* STATUT */}
+          <select
+            value={statut}
+            onChange={(e) => setStatut(e.target.value)}
+            className="bg-zinc-800 p-3 rounded-xl"
+          >
+            <option value="idee">Idée</option>
+            <option value="definition">Définition</option>
+            <option value="conception">Conception</option>
+            <option value="planification">Planification</option>
+            <option value="construction">Construction</option>
+            <option value="operationnel">Opérationnel</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+
+          {/* LOCALISATION */}
+          <select
+            value={localisation}
+            onChange={(e) =>
+              setLocalisation(e.target.value)
+            }
+            className="bg-zinc-800 p-3 rounded-xl"
+          >
+            <option value="indetermine">
+              Indéterminé
+            </option>
+            <option value="maison">Maison</option>
+            <option value="apart">Appartement</option>
+            <option value="autre">Autre</option>
+          </select>
         </div>
 
         <button
@@ -108,6 +162,11 @@ export default function Home() {
             key={p.id_projet}
             className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
           >
+            {/* ID */}
+            <div className="text-xs text-zinc-500 mb-2">
+              ID #{p.id_projet}
+            </div>
+
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold">
@@ -120,7 +179,9 @@ export default function Home() {
               </div>
 
               <button
-                onClick={() => deleteProject(p.id_projet)}
+                onClick={() =>
+                  deleteProject(p.id_projet)
+                }
                 className="text-red-400"
               >
                 ✕
@@ -134,6 +195,10 @@ export default function Home() {
 
               <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
                 ⚡ {p.priorite}
+              </span>
+
+              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
+                📍 {p.localisation}
               </span>
             </div>
 
