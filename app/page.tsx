@@ -9,18 +9,9 @@ export default function Home() {
 
   const [nom, setNom] = useState("");
   const [description, setDescription] = useState("");
-  const [statut, setStatut] = useState("idee");
-  const [priorite, setPriorite] = useState("Medium");
-
-  const [filter, setFilter] = useState("all");
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  const [deadline, setDeadline] = useState("");
 
   async function fetchProjects() {
-    setLoading(true);
-
     const { data } = await supabase
       .from("projets")
       .select("*")
@@ -30,24 +21,24 @@ export default function Home() {
     setLoading(false);
   }
 
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
   async function addProject() {
     if (!nom) return;
 
-    const { error } = await supabase
-      .from("projets")
-      .insert({
-        nom,
-        description,
-        statut,
-        priorite,
-      } as any);
-
-    if (error) {
-      console.error("Insert error:", error);
-    }
+    await supabase.from("projets").insert({
+      nom,
+      description,
+      statut: "idee",
+      priorite: "Medium",
+      deadline,
+    } as any);
 
     setNom("");
     setDescription("");
+    setDeadline("");
 
     fetchProjects();
   }
@@ -61,123 +52,105 @@ export default function Home() {
     fetchProjects();
   }
 
-  const filtered = projects.filter((p) => {
-    if (filter === "all") return true;
-    return p.statut === filter;
-  });
-
   return (
-    <main
-      style={{
-        padding: 30,
-        background: "#0f0f0f",
-        minHeight: "100vh",
-        color: "white",
-      }}
-    >
-      <h1 style={{ fontSize: 28, marginBottom: 20 }}>
-        📊 Dashboard Projets
-      </h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-4xl font-bold">
+          📊 Dashboard
+        </h1>
 
-      {/* CREATE PROJECT */}
-      <div
-        style={{
-          marginBottom: 30,
-          padding: 15,
-          border: "1px solid #333",
-          borderRadius: 10,
-        }}
-      >
-        <h3>➕ Ajouter un projet</h3>
+        <p className="text-zinc-400 mt-2">
+          Gestion avancée des projets
+        </p>
+      </div>
 
-        <input
-          placeholder="Nom"
-          value={nom}
-          onChange={(e) => setNom(e.target.value)}
-          style={{ marginRight: 10 }}
-        />
+      {/* FORM */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <h2 className="text-xl font-semibold mb-4">
+          Nouveau projet
+        </h2>
 
-        <input
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          style={{ marginRight: 10 }}
-        />
+        <div className="grid md:grid-cols-3 gap-4">
+          <input
+            className="bg-zinc-800 p-3 rounded-xl"
+            placeholder="Nom"
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+          />
 
-        <select value={statut} onChange={(e) => setStatut(e.target.value)}>
-          <option value="idee">Idée</option>
-          <option value="definition">Définition</option>
-          <option value="conception">Conception</option>
-          <option value="planification">Planification</option>
-          <option value="construction">Construction</option>
-          <option value="operationnel">Opérationnel</option>
-        </select>
+          <input
+            className="bg-zinc-800 p-3 rounded-xl"
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
 
-        <select
-          value={priorite}
-          onChange={(e) => setPriorite(e.target.value)}
+          <input
+            type="date"
+            className="bg-zinc-800 p-3 rounded-xl"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+        </div>
+
+        <button
+          onClick={addProject}
+          className="mt-4 bg-white text-black px-5 py-3 rounded-xl font-semibold"
         >
-          <option value="Low">Low</option>
-          <option value="Medium">Medium</option>
-          <option value="High">High</option>
-        </select>
-
-        <button onClick={addProject} style={{ marginLeft: 10 }}>
           Ajouter
         </button>
       </div>
 
-      {/* FILTERS */}
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={() => setFilter("all")}>Tous</button>
-        <button onClick={() => setFilter("idee")}>Idée</button>
-        <button onClick={() => setFilter("planification")}>
-          Planification
-        </button>
-        <button onClick={() => setFilter("construction")}>
-          Construction
-        </button>
-      </div>
-
-      {loading && <p>Chargement...</p>}
-
-      {/* PROJECT LIST */}
-      <div style={{ display: "grid", gap: 15 }}>
-        {filtered.map((p) => (
+      {/* PROJECTS */}
+      <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-5">
+        {projects.map((p) => (
           <div
             key={p.id_projet}
-            style={{
-              padding: 15,
-              border: "1px solid #333",
-              borderRadius: 12,
-              background: "#1a1a1a",
-            }}
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5"
           >
-            <h2>{p.nom}</h2>
-            <p style={{ opacity: 0.7 }}>{p.description}</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {p.nom}
+                </h2>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              <span>📌 {p.statut}</span>
-              <span>⚡ {p.priorite}</span>
+                <p className="text-zinc-400 mt-2">
+                  {p.description}
+                </p>
+              </div>
+
+              <button
+                onClick={() => deleteProject(p.id_projet)}
+                className="text-red-400"
+              >
+                ✕
+              </button>
             </div>
 
-            <button
-              onClick={() => deleteProject(p.id_projet)}
-              style={{
-                marginTop: 10,
-                background: "red",
-                color: "white",
-                border: "none",
-                padding: "5px 10px",
-                borderRadius: 5,
-                cursor: "pointer",
-              }}
-            >
-              Supprimer
-            </button>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
+                📌 {p.statut}
+              </span>
+
+              <span className="bg-zinc-800 px-3 py-1 rounded-lg text-sm">
+                ⚡ {p.priorite}
+              </span>
+            </div>
+
+            {p.deadline && (
+              <div className="mt-4 text-sm text-orange-400">
+                ⏳ Deadline : {p.deadline}
+              </div>
+            )}
           </div>
         ))}
       </div>
-    </main>
+
+      {loading && (
+        <p className="text-zinc-500">
+          Chargement...
+        </p>
+      )}
+    </div>
   );
 }
