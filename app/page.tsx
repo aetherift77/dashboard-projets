@@ -33,14 +33,16 @@ export default function Home() {
   async function addProject() {
     if (!nom) return;
 
-    await supabase.from("projets").insert([
-      {
-        nom,
-        description,
-        statut,
-        priorite,
-      } as any, // ✅ FIX VERCEL
-    ]);
+    await supabase
+      .from("projets" as any)
+      .insert([
+        {
+          nom,
+          description,
+          statut,
+          priorite,
+        },
+      ]);
 
     setNom("");
     setDescription("");
