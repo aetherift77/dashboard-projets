@@ -8,13 +8,13 @@ import { supabase } from "@/lib/supabase";
 
 type Localisation = "indetermine" | "maison" | "apart" | "autre";
 type Statut =
-  | "idee"
-  | "definition"
-  | "conception"
-  | "planification"
-  | "construction"
-  | "operationnel"
-  | "maintenance";
+  | "Idée"
+  | "Definition"
+  | "Preparation"
+  | "Production"
+  | "Operationnel"
+  | "Maintenance"
+  | "Abandonne";
 type Priorite = "Low" | "Medium" | "High";
 
 interface Projet {
@@ -28,21 +28,21 @@ interface Projet {
   deadline: string | null;
 }
 
-// ─── Config maps ──────────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const STATUTS: Statut[] = [
-  "idee", "definition", "conception", "planification",
-  "construction", "operationnel", "maintenance",
+  "Idée", "Definition", "Preparation", "Production",
+  "Operationnel", "Maintenance", "Abandonne",
 ];
 
 const STATUT_COLORS: Record<Statut, string> = {
-  idee:          "bg-slate-700 text-slate-200",
-  definition:    "bg-indigo-900/70 text-indigo-300",
-  conception:    "bg-violet-900/70 text-violet-300",
-  planification: "bg-blue-900/70 text-blue-300",
-  construction:  "bg-amber-900/70 text-amber-300",
-  operationnel:  "bg-emerald-900/70 text-emerald-300",
-  maintenance:   "bg-teal-900/70 text-teal-300",
+  Idée:         "bg-slate-700 text-slate-200",
+  Definition:   "bg-indigo-900/70 text-indigo-300",
+  Preparation:  "bg-violet-900/70 text-violet-300",
+  Production:   "bg-amber-900/70 text-amber-300",
+  Operationnel: "bg-emerald-900/70 text-emerald-300",
+  Maintenance:  "bg-teal-900/70 text-teal-300",
+  Abandonne:    "bg-zinc-800 text-zinc-500",
 };
 
 const PRIORITE_COLORS: Record<Priorite, string> = {
@@ -216,18 +216,14 @@ function ProjectRow({
             </>
           ) : (
             <>
-              {/* Ouvrir détail */}
               <Link href={`/projets/${projet.id_projet}`}
-                onClick={(e) => e.stopPropagation()}
-                title="Ouvrir le projet"
+                onClick={(e) => e.stopPropagation()} title="Ouvrir le projet"
                 className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-zinc-800 hover:bg-indigo-900/40 text-zinc-400 hover:text-indigo-400 transition-all">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                 </svg>
               </Link>
-
-              {/* Éditer */}
               <button onClick={() => setEditing(true)} title="Modifier"
                 className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -235,8 +231,6 @@ function ProjectRow({
                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
               </button>
-
-              {/* Supprimer */}
               {confirmDelete ? (
                 <div className="flex items-center gap-1">
                   <button onClick={() => onDelete(projet.id_projet)}
@@ -281,14 +275,12 @@ function ProjectRow({
         {editing ? (
           <div className="flex flex-col gap-0.5">
             <span className="text-zinc-600 text-[10px] uppercase tracking-wider">Statut</span>
-            <InlineSelect value={draft.statut} options={STATUTS}
-              onChange={(v) => upd("statut", v)}
-              renderOption={(v) => v.charAt(0).toUpperCase() + v.slice(1)} />
+            <InlineSelect value={draft.statut} options={STATUTS} onChange={(v) => upd("statut", v)} />
           </div>
         ) : (
           <Badge className={STATUT_COLORS[projet.statut]}>
             <span className="w-1.5 h-1.5 rounded-full bg-current opacity-75" />
-            {projet.statut.charAt(0).toUpperCase() + projet.statut.slice(1)}
+            {projet.statut}
           </Badge>
         )}
 
@@ -352,7 +344,7 @@ function CreateModal({
   onCreate: (p: Omit<Projet, "id_projet" | "date_og">) => Promise<void>;
 }) {
   const [form, setForm] = useState<Omit<Projet, "id_projet" | "date_og">>({
-    nom: "", description: null, statut: "idee",
+    nom: "", description: null, statut: "Idée",
     priorite: "Medium", localisation: "indetermine", deadline: null,
   });
   const [saving, setSaving] = useState(false);
@@ -395,23 +387,18 @@ function CreateModal({
             <input type="text" value={form.nom} onChange={(e) => upd("nom", e.target.value)}
               placeholder="Nom du projet" autoFocus className={inputCls} />
           </div>
-
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
             <textarea value={form.description ?? ""} rows={3}
               onChange={(e) => upd("description", e.target.value || null)}
-              placeholder="Description (optionnel)"
-              className={`${inputCls} resize-none`} />
+              placeholder="Description (optionnel)" className={`${inputCls} resize-none`} />
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Statut</label>
               <select value={form.statut} onChange={(e) => upd("statut", e.target.value as Statut)}
                 className={inputCls}>
-                {STATUTS.map((s) => (
-                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                ))}
+                {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
@@ -424,7 +411,6 @@ function CreateModal({
               </select>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Localisation</label>
@@ -439,11 +425,9 @@ function CreateModal({
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Deadline</label>
               <input type="date" value={form.deadline ?? ""}
-                onChange={(e) => upd("deadline", e.target.value || null)}
-                className={inputCls} />
+                onChange={(e) => upd("deadline", e.target.value || null)} className={inputCls} />
             </div>
           </div>
-
           {error && <p className="text-rose-400 text-sm">{error}</p>}
         </div>
 
@@ -485,7 +469,6 @@ function FilterBar({
   total: number;
 }) {
   const sel = "bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500";
-
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative">
@@ -498,26 +481,22 @@ function FilterBar({
           placeholder="Rechercher…"
           className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-44" />
       </div>
-
       <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value as Statut | "all")} className={sel}>
         <option value="all">Tous les statuts</option>
-        {STATUTS.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+        {STATUTS.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
-
       <select value={filterPriorite} onChange={(e) => setFilterPriorite(e.target.value as Priorite | "all")} className={sel}>
         <option value="all">Toutes priorités</option>
         <option value="High">High</option>
         <option value="Medium">Medium</option>
         <option value="Low">Low</option>
       </select>
-
       <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} className={sel}>
         <option value="nom">Trier : Nom</option>
         <option value="deadline">Trier : Deadline</option>
         <option value="priorite">Trier : Priorité</option>
         <option value="statut">Trier : Statut</option>
       </select>
-
       <span className="ml-auto text-xs text-zinc-600">{total} projet{total !== 1 ? "s" : ""}</span>
     </div>
   );
@@ -599,12 +578,11 @@ export default function DashboardPage() {
     total: projets.length,
     high: projets.filter((p) => p.priorite === "High").length,
     overdue: projets.filter((p) => p.deadline && isOverdue(p.deadline)).length,
-    operationnel: projets.filter((p) => p.statut === "operationnel").length,
+    operationnel: projets.filter((p) => p.statut === "Operationnel").length,
   };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
       <div className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <h1 className="font-bold text-zinc-100 text-base">Projets</h1>
@@ -619,7 +597,6 @@ export default function DashboardPage() {
       </div>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: "Total",          value: stats.total,        color: "text-zinc-300",    bg: "bg-zinc-800/50" },
@@ -634,7 +611,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Filters */}
         <FilterBar
           filterStatut={filterStatut} setFilterStatut={setFilterStatut}
           filterPriorite={filterPriorite} setFilterPriorite={setFilterPriorite}
@@ -643,7 +619,6 @@ export default function DashboardPage() {
           total={filtered.length}
         />
 
-        {/* List */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -659,7 +634,7 @@ export default function DashboardPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <p className="text-zinc-600 text-sm">
-              {projets.length === 0 ? "Aucun projet. Commencez par en créer un !" : "Aucun projet ne correspond aux filtres."}
+              {projets.length === 0 ? "Aucun projet." : "Aucun projet ne correspond aux filtres."}
             </p>
             {projets.length === 0 && (
               <button onClick={() => setShowCreate(true)}
