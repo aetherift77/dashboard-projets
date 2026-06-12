@@ -11,7 +11,6 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 // Chemins accessibles sans session.
 const PUBLIC_PATHS = [
-  "/login",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/cron", // protégé par CRON_SECRET, appelé sans cookie par Vercel Cron
@@ -33,17 +32,32 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
+function safeFrom(value: string | null): string {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/";
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+
+  // Page de connexion : si déjà authentifié, on renvoie vers l'app (évite d'afficher
+  // le login à un utilisateur déjà connecté). Sinon on laisse passer.
+  if (pathname === "/login") {
+    if (await verifySessionToken(token)) {
+      const url = request.nextUrl.clone();
+      url.pathname = safeFrom(request.nextUrl.searchParams.get("from"));
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
   if (isPublic(pathname)) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const valid = await verifySessionToken(token);
-
-  if (!valid) {
+  // Toutes les autres routes exigent une session valide.
+  if (!(await verifySessionToken(token))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
