@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
-const SUPABASE_ORIGIN = "https://pbeonzeklchqtjvtmtfd.supabase.co";
+// Origine Supabase déduite de l'env (templatisable). Sert au CSP connect-src.
+const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_WS = SUPABASE_ORIGIN.replace("https://", "wss://");
+
+const connectSrc = ["'self'", SUPABASE_ORIGIN, SUPABASE_WS].filter(Boolean).join(" ");
 
 // En-têtes de sécurité appliqués à toutes les routes.
 const securityHeaders = [
@@ -20,16 +24,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // Next/React en dev ont besoin de 'unsafe-inline' et 'unsafe-eval'.
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      // REST + Realtime (websocket) Supabase, pour l'app et les usages futurs.
-      `connect-src 'self' ${SUPABASE_ORIGIN} ${SUPABASE_ORIGIN.replace(
-        "https://",
-        "wss://"
-      )}`,
+      `connect-src ${connectSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -39,12 +38,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: securityHeaders,
-      },
-    ];
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 

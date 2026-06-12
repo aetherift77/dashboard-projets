@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -517,9 +517,10 @@ export default function DashboardPage() {
   async function fetchProjets() {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase
-      .from("projets").select("*").order("id_projet", { ascending: false });
-    if (error) setError(error.message);
+    const { data, error } = await dbSelect<Projet[]>("projets", {
+      columns: "*", order: { column: "id_projet", ascending: false },
+    });
+    if (error) setError(error);
     else setProjets((data as Projet[]) ?? []);
     setLoading(false);
   }
@@ -527,27 +528,27 @@ export default function DashboardPage() {
   useEffect(() => { fetchProjets(); }, []);
 
   async function handleCreate(form: Omit<Projet, "id_projet" | "date_og">) {
-    const { data, error } = await supabase.from("projets")
-      .insert([{ nom: form.nom, description: form.description, statut: form.statut,
-        priorite: form.priorite, localisation: form.localisation, deadline: form.deadline } as any])
-      .select().single();
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { data, error } = await dbInsert<Projet>("projets", [{
+      nom: form.nom, description: form.description, statut: form.statut,
+      priorite: form.priorite, localisation: form.localisation, deadline: form.deadline,
+    }], { returning: true, single: true });
+    if (error) { alert(`Erreur : ${error}`); return; }
     setProjets((prev) => [data as Projet, ...prev]);
     setShowCreate(false);
   }
 
   async function handleSave(updated: Projet) {
-    const { error } = await supabase.from("projets")
-      .update({ nom: updated.nom, description: updated.description, statut: updated.statut,
-        priorite: updated.priorite, localisation: updated.localisation, deadline: updated.deadline } as any)
-      .eq("id_projet", updated.id_projet);
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { error } = await dbUpdate("projets", {
+      nom: updated.nom, description: updated.description, statut: updated.statut,
+      priorite: updated.priorite, localisation: updated.localisation, deadline: updated.deadline,
+    }, ["id_projet", updated.id_projet]);
+    if (error) { alert(`Erreur : ${error}`); return; }
     setProjets((prev) => prev.map((p) => p.id_projet === updated.id_projet ? updated : p));
   }
 
   async function handleDelete(id: number) {
-    const { error } = await supabase.from("projets").delete().eq("id_projet", id);
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { error } = await dbDelete("projets", ["id_projet", id]);
+    if (error) { alert(`Erreur : ${error}`); return; }
     setProjets((prev) => prev.filter((p) => p.id_projet !== id));
   }
 

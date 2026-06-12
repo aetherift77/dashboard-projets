@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, BellRing } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { dbSelect } from "@/lib/db";
 import { subscribeToPush, notificationPermission } from "@/lib/notifications";
 import { type Projet, isOverdue, formatDate } from "@/lib/types";
 
@@ -21,10 +21,10 @@ export default function NotificationBell() {
   useEffect(() => {
     setPerm(notificationPermission());
     (async () => {
-      const { data } = await supabase
-        .from("projets")
-        .select("id_projet, nom, description, statut, priorite, localisation, deadline")
-        .not("deadline", "is", null);
+      const { data } = await dbSelect<Projet[]>("projets", {
+        columns: "id_projet, nom, description, statut, priorite, localisation, deadline",
+        notNull: "deadline",
+      });
       setProjets((data as Projet[]) ?? []);
     })();
   }, []);

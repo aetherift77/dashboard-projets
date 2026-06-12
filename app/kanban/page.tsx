@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { dbSelect, dbInsert, dbUpdate } from "@/lib/db";
 import {
   type Statut,
   type Priorite,
@@ -291,15 +291,15 @@ export default function KanbanPage() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from("projets")
-        .select("id_projet, nom, description, statut, priorite, localisation, deadline")
-        .order("id_projet", { ascending: true });
+      const { data } = await dbSelect<Projet[]>("projets", {
+        columns: "id_projet, nom, description, statut, priorite, localisation, deadline",
+        order: { column: "id_projet", ascending: true },
+      });
       setProjets((data as Projet[]) ?? []);
 
-      const { data: etapesData } = await supabase
-        .from("etapes")
-        .select("id_projet, statut");
+      const { data: etapesData } = await dbSelect<{ id_projet: number | null; statut: string }[]>(
+        "etapes", { columns: "id_projet, statut" }
+      );
       const map: Record<number, EtapeStat> = {};
       ((etapesData as { id_projet: number | null; statut: string }[]) ?? []).forEach((e) => {
         if (e.id_projet == null) return;
@@ -318,13 +318,11 @@ export default function KanbanPage() {
   // ── Quick create ──────────────────────────────────────────────────────────
 
   async function handleQuickCreate(statut: Statut, nom: string) {
-    const { data, error } = await supabase
-      .from("projets")
-      .insert([{ nom, description: null, statut, priorite: "Medium",
-        localisation: "indetermine", deadline: null } as any])
-      .select("id_projet, nom, description, statut, priorite, localisation, deadline")
-      .single();
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { data, error } = await dbInsert<Projet>("projets", [{
+      nom, description: null, statut, priorite: "Medium",
+      localisation: "indetermine", deadline: null,
+    }], { returning: true, single: true });
+    if (error) { alert(`Erreur : ${error}`); return; }
     setProjets((prev) => [...prev, data as Projet]);
   }
 
@@ -370,10 +368,9 @@ export default function KanbanPage() {
     setDraggingProjet(null);
     setDragOverStatut(null);
 
-    const { error } = await supabase
-      .from("projets")
-      .update({ statut: targetStatut } as any)
-      .eq("id_projet", draggingProjet.id_projet);
+    const { error } = await dbUpdate(
+      "projets", { statut: targetStatut }, ["id_projet", draggingProjet.id_projet]
+    );
 
     if (error) {
       // Rollback
@@ -384,7 +381,7 @@ export default function KanbanPage() {
             : p
         )
       );
-      alert(`Erreur : ${error.message}`);
+      alert(`Erreur : ${error}`);
     }
 
     savingRef.current = false;

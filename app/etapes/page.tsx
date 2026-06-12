@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -538,8 +538,8 @@ export default function EtapesPage() {
   async function fetchAll() {
     setLoading(true);
     const [{ data: etapesData }, { data: projetsData }] = await Promise.all([
-      supabase.from("etapes").select("*").order("id_etape", { ascending: false }),
-      supabase.from("projets").select("id_projet, nom, statut").order("nom"),
+      dbSelect<Etape[]>("etapes", { columns: "*", order: { column: "id_etape", ascending: false } }),
+      dbSelect<Projet[]>("projets", { columns: "id_projet, nom, statut", order: { column: "nom" } }),
     ]);
     setEtapes((etapesData as Etape[]) ?? []);
     setProjets((projetsData as Projet[]) ?? []);
@@ -551,20 +551,16 @@ export default function EtapesPage() {
   // ── Create ───────────────────────────────────────────────────────────────
 
   async function handleCreate(form: Omit<Etape, "id_etape" | "date_creation">) {
-    const { data, error } = await supabase
-      .from("etapes")
-      .insert([{
-        nom: form.nom,
-        description: form.description,
-        statut: form.statut,
-        id_projet: form.id_projet,
-        deadline: form.deadline,
-        date_fin: form.date_fin,
-      } as any])
-      .select()
-      .single();
+    const { data, error } = await dbInsert<Etape>("etapes", [{
+      nom: form.nom,
+      description: form.description,
+      statut: form.statut,
+      id_projet: form.id_projet,
+      deadline: form.deadline,
+      date_fin: form.date_fin,
+    }], { returning: true, single: true });
 
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    if (error) { alert(`Erreur : ${error}`); return; }
     setEtapes((prev) => [data as Etape, ...prev]);
     setShowCreate(false);
   }
@@ -572,19 +568,16 @@ export default function EtapesPage() {
   // ── Save ─────────────────────────────────────────────────────────────────
 
   async function handleSave(updated: Etape) {
-    const { error } = await supabase
-      .from("etapes")
-      .update({
-        nom: updated.nom,
-        description: updated.description,
-        statut: updated.statut,
-        id_projet: updated.id_projet,
-        deadline: updated.deadline,
-        date_fin: updated.date_fin,
-      } as any)
-      .eq("id_etape", updated.id_etape);
+    const { error } = await dbUpdate("etapes", {
+      nom: updated.nom,
+      description: updated.description,
+      statut: updated.statut,
+      id_projet: updated.id_projet,
+      deadline: updated.deadline,
+      date_fin: updated.date_fin,
+    }, ["id_etape", updated.id_etape]);
 
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    if (error) { alert(`Erreur : ${error}`); return; }
     setEtapes((prev) =>
       prev.map((e) => (e.id_etape === updated.id_etape ? updated : e))
     );
@@ -593,8 +586,8 @@ export default function EtapesPage() {
   // ── Delete ───────────────────────────────────────────────────────────────
 
   async function handleDelete(id: number) {
-    const { error } = await supabase.from("etapes").delete().eq("id_etape", id);
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { error } = await dbDelete("etapes", ["id_etape", id]);
+    if (error) { alert(`Erreur : ${error}`); return; }
     setEtapes((prev) => prev.filter((e) => e.id_etape !== id));
   }
 

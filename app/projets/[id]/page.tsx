@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -264,8 +264,8 @@ export default function ProjetDetailPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const [{ data: pData, error: pErr }, { data: eData }] = await Promise.all([
-      supabase.from("projets").select("*").eq("id_projet", id).single(),
-      supabase.from("etapes").select("*").eq("id_projet", id).order("id_etape"),
+      dbSelect<Projet>("projets", { columns: "*", eq: ["id_projet", id], single: true }),
+      dbSelect<Etape[]>("etapes", { columns: "*", eq: ["id_projet", id], order: { column: "id_etape" } }),
     ]);
     if (pErr || !pData) { setNotFound(true); setLoading(false); return; }
     const p = pData as Projet;
@@ -281,41 +281,38 @@ export default function ProjetDetailPage() {
   async function handleSaveInfo() {
     if (!draft) return;
     setSavingInfo(true);
-    const { error } = await supabase.from("projets")
-      .update({
-        nom: draft.nom, description: draft.description, statut: draft.statut,
-        priorite: draft.priorite, localisation: draft.localisation, deadline: draft.deadline,
-      } as any)
-      .eq("id_projet", id);
+    const { error } = await dbUpdate("projets", {
+      nom: draft.nom, description: draft.description, statut: draft.statut,
+      priorite: draft.priorite, localisation: draft.localisation, deadline: draft.deadline,
+    }, ["id_projet", id]);
     if (!error) { setProjet(draft); setEditingInfo(false); }
-    else alert(error.message);
+    else alert(error);
     setSavingInfo(false);
   }
 
   async function handleSaveNotes() {
     setSavingNotes(true);
-    const { error } = await supabase.from("projets")
-      .update({ notes } as any).eq("id_projet", id);
+    const { error } = await dbUpdate("projets", { notes }, ["id_projet", id]);
     if (!error) { setNotesSaved(true); setTimeout(() => setNotesSaved(false), 2000); }
-    else alert(error.message);
+    else alert(error);
     setSavingNotes(false);
   }
 
   async function handleAddEtape() {
     if (!newEtapeNom.trim()) return;
     setAddingEtape(true);
-    const { data, error } = await supabase.from("etapes")
-      .insert([{ nom: newEtapeNom, id_projet: id, statut: "todo" } as any])
-      .select().single();
+    const { data, error } = await dbInsert<Etape>("etapes", [
+      { nom: newEtapeNom, id_projet: id, statut: "todo" },
+    ], { returning: true, single: true });
     if (!error && data) { setEtapes((prev) => [...prev, data as Etape]); setNewEtapeNom(""); }
     setAddingEtape(false);
   }
 
   async function handleToggleEtape(updated: Etape) {
     const date_fin = updated.statut === "termine" ? new Date().toISOString().split("T")[0] : null;
-    const { error } = await supabase.from("etapes")
-      .update({ statut: updated.statut, date_fin } as any)
-      .eq("id_etape", updated.id_etape);
+    const { error } = await dbUpdate(
+      "etapes", { statut: updated.statut, date_fin }, ["id_etape", updated.id_etape]
+    );
     if (!error)
       setEtapes((prev) => prev.map((e) =>
         e.id_etape === updated.id_etape ? { ...updated, date_fin } : e
@@ -323,7 +320,7 @@ export default function ProjetDetailPage() {
   }
 
   async function handleDeleteEtape(id_etape: number) {
-    await supabase.from("etapes").delete().eq("id_etape", id_etape);
+    await dbDelete("etapes", ["id_etape", id_etape]);
     setEtapes((prev) => prev.filter((e) => e.id_etape !== id_etape));
   }
 

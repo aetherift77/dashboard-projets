@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import webpush from "web-push";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     tag: "aether-deadlines",
   });
 
-  const { data: subsData } = await supabase.from("push_subscriptions").select("endpoint, p256dh, auth");
+  const { data: subsData } = await supabaseAdmin().from("push_subscriptions").select("endpoint, p256dh, auth");
   const subs = (subsData as { endpoint: string; p256dh: string; auth: string }[]) ?? [];
 
   let sent = 0;
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
   );
 
   if (stale.length) {
-    await supabase.from("push_subscriptions").delete().in("endpoint", stale);
+    await supabaseAdmin().from("push_subscriptions").delete().in("endpoint", stale);
   }
 
   return NextResponse.json({

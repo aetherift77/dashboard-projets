@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 import Badge from "@/components/Badge";
 import Modal from "@/components/Modal";
 import {
@@ -401,11 +401,13 @@ export default function InventairePage() {
   async function fetchData() {
     setLoading(true);
     setError(null);
-    const { data: itemsData, error: itemsErr } = await supabase
-      .from("inventaire").select("*").order("id_objet", { ascending: false });
-    const { data: projData } = await supabase
-      .from("projets").select("id_projet, nom").order("id_projet", { ascending: true });
-    if (itemsErr) setError(itemsErr.message);
+    const { data: itemsData, error: itemsErr } = await dbSelect<Item[]>("inventaire", {
+      columns: "*", order: { column: "id_objet", ascending: false },
+    });
+    const { data: projData } = await dbSelect<ProjetRef[]>("projets", {
+      columns: "id_projet, nom", order: { column: "id_projet", ascending: true },
+    });
+    if (itemsErr) setError(itemsErr);
     else setItems((itemsData as Item[]) ?? []);
     setProjects((projData as ProjetRef[]) ?? []);
     setLoading(false);
@@ -418,27 +420,27 @@ export default function InventairePage() {
   );
 
   async function handleCreate(form: Omit<Item, "id_objet">) {
-    const { data, error } = await supabase.from("inventaire")
-      .insert([{ nom: form.nom, description: form.description, nb: form.nb,
-        localisation: form.localisation, id_projet: form.id_projet } as any])
-      .select().single();
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { data, error } = await dbInsert<Item>("inventaire", [{
+      nom: form.nom, description: form.description, nb: form.nb,
+      localisation: form.localisation, id_projet: form.id_projet,
+    }], { returning: true, single: true });
+    if (error) { alert(`Erreur : ${error}`); return; }
     setItems((prev) => [data as Item, ...prev]);
     setShowCreate(false);
   }
 
   async function handleSave(updated: Item) {
-    const { error } = await supabase.from("inventaire")
-      .update({ nom: updated.nom, description: updated.description, nb: updated.nb,
-        localisation: updated.localisation, id_projet: updated.id_projet } as any)
-      .eq("id_objet", updated.id_objet);
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { error } = await dbUpdate("inventaire", {
+      nom: updated.nom, description: updated.description, nb: updated.nb,
+      localisation: updated.localisation, id_projet: updated.id_projet,
+    }, ["id_objet", updated.id_objet]);
+    if (error) { alert(`Erreur : ${error}`); return; }
     setItems((prev) => prev.map((i) => i.id_objet === updated.id_objet ? updated : i));
   }
 
   async function handleDelete(id: number) {
-    const { error } = await supabase.from("inventaire").delete().eq("id_objet", id);
-    if (error) { alert(`Erreur : ${error.message}`); return; }
+    const { error } = await dbDelete("inventaire", ["id_objet", id]);
+    if (error) { alert(`Erreur : ${error}`); return; }
     setItems((prev) => prev.filter((i) => i.id_objet !== id));
   }
 

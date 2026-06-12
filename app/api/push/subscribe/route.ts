@@ -3,7 +3,7 @@
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Abonnement incomplet" }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin()
     .from("push_subscriptions")
     .upsert(
       { endpoint, p256dh, auth, user_agent: request.headers.get("user-agent") } as any,
@@ -38,6 +38,6 @@ export async function DELETE(request: NextRequest) {
   let endpoint: string | undefined;
   try { endpoint = (await request.json())?.endpoint; } catch { endpoint = undefined; }
   if (!endpoint) return NextResponse.json({ error: "endpoint requis" }, { status: 400 });
-  await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+  await supabaseAdmin().from("push_subscriptions").delete().eq("endpoint", endpoint);
   return NextResponse.json({ ok: true });
 }
