@@ -9,6 +9,7 @@ import {
   ListChecks,
   LogOut,
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -64,13 +65,16 @@ export default function Sidebar() {
         </Link>
       </nav>
 
-      <button
-        onClick={logout}
-        className="flex items-center gap-2 p-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-left transition-colors"
-      >
-        <LogOut size={18} />
-        Déconnexion
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <NotificationBell />
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 p-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 text-left transition-colors"
+        >
+          <LogOut size={18} />
+          Déconnexion
+        </button>
+      </div>
     </aside>
   );
 }
