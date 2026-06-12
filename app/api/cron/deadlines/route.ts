@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
   limit.setDate(limit.getDate() + ALERT_WINDOW_DAYS);
   const limitStr = limit.toISOString().slice(0, 10);
 
-  const { data: projetsData } = await supabase
+  const { data: projetsData } = await supabaseAdmin()
     .from("projets")
     .select("id_projet, nom, deadline, statut")
     .not("deadline", "is", null)
