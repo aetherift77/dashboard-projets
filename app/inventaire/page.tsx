@@ -2,52 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Localisation = "indetermine" | "maison" | "apart" | "autre";
-
-interface ProjetRef {
-  id_projet: number;
-  nom: string;
-}
-
-interface Item {
-  id_objet: number;
-  nom: string;
-  description: string | null;
-  nb: number;
-  localisation: Localisation;
-  id_projet: number | null;
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const LOCALISATIONS: Localisation[] = ["indetermine", "maison", "apart", "autre"];
-
-const LOCALISATION_LABELS: Record<Localisation, string> = {
-  indetermine: "—",
-  maison: "🏠 Maison",
-  apart: "🏢 Apart",
-  autre: "📍 Autre",
-};
-
-const LOCALISATION_COLORS: Record<Localisation, string> = {
-  indetermine: "bg-zinc-800 text-zinc-500",
-  maison: "bg-emerald-900/70 text-emerald-300",
-  apart: "bg-indigo-900/70 text-indigo-300",
-  autre: "bg-amber-900/70 text-amber-300",
-};
-
-// ─── Badge ────────────────────────────────────────────────────────────────────
-
-function Badge({ children, className }: { children: React.ReactNode; className: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide ${className}`}>
-      {children}
-    </span>
-  );
-}
+import Badge from "@/components/Badge";
+import Modal from "@/components/Modal";
+import {
+  type Localisation,
+  type InventaireItem as Item,
+  type ProjetRef,
+  LOCALISATIONS,
+  LOCALISATION_LABELS,
+  LOCALISATION_COLORS,
+} from "@/lib/types";
 
 // ─── Inline inputs ────────────────────────────────────────────────────────────
 
@@ -304,64 +268,11 @@ function CreateModal({
   const inputCls = "w-full bg-zinc-800 border border-zinc-700 text-zinc-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-indigo-500";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl p-6 mx-4"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-zinc-100">Nouvel objet</h2>
-          <button onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Nom <span className="text-rose-400">*</span>
-            </label>
-            <input type="text" value={form.nom} onChange={(e) => upd("nom", e.target.value)}
-              placeholder="Nom de l'objet" autoFocus className={inputCls} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
-            <textarea value={form.description ?? ""} rows={3}
-              onChange={(e) => upd("description", e.target.value || null)}
-              placeholder="Description (optionnel)" className={`${inputCls} resize-none`} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Quantité</label>
-              <input type="number" min={0} value={form.nb}
-                onChange={(e) => upd("nb", Math.max(0, Number(e.target.value) || 0))}
-                className={inputCls} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">Localisation</label>
-              <select value={form.localisation}
-                onChange={(e) => upd("localisation", e.target.value as Localisation)}
-                className={inputCls}>
-                {LOCALISATIONS.map((l) => <option key={l} value={l}>{LOCALISATION_LABELS[l]}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Projet lié</label>
-            <select value={form.id_projet ?? ""}
-              onChange={(e) => upd("id_projet", e.target.value ? Number(e.target.value) : null)}
-              className={inputCls}>
-              <option value="">Aucun projet</option>
-              {projects.map((p) => (
-                <option key={p.id_projet} value={p.id_projet}>#{p.id_projet} — {p.nom}</option>
-              ))}
-            </select>
-          </div>
-          {error && <p className="text-rose-400 text-sm">{error}</p>}
-        </div>
-
-        <div className="flex justify-end gap-2 mt-6">
+    <Modal
+      title="Nouvel objet"
+      onClose={onClose}
+      footer={
+        <>
           <button onClick={onClose}
             className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-sm font-medium transition-colors">
             Annuler
@@ -376,9 +287,51 @@ function CreateModal({
             )}
             Créer l'objet
           </button>
+        </>
+      }
+    >
+      <div>
+        <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+          Nom <span className="text-rose-400">*</span>
+        </label>
+        <input type="text" value={form.nom} onChange={(e) => upd("nom", e.target.value)}
+          placeholder="Nom de l'objet" autoFocus className={inputCls} />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Description</label>
+        <textarea value={form.description ?? ""} rows={3}
+          onChange={(e) => upd("description", e.target.value || null)}
+          placeholder="Description (optionnel)" className={`${inputCls} resize-none`} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-zinc-400 mb-1.5">Quantité</label>
+          <input type="number" min={0} value={form.nb}
+            onChange={(e) => upd("nb", Math.max(0, Number(e.target.value) || 0))}
+            className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-zinc-400 mb-1.5">Localisation</label>
+          <select value={form.localisation}
+            onChange={(e) => upd("localisation", e.target.value as Localisation)}
+            className={inputCls}>
+            {LOCALISATIONS.map((l) => <option key={l} value={l}>{LOCALISATION_LABELS[l]}</option>)}
+          </select>
         </div>
       </div>
-    </div>
+      <div>
+        <label className="block text-xs font-medium text-zinc-400 mb-1.5">Projet lié</label>
+        <select value={form.id_projet ?? ""}
+          onChange={(e) => upd("id_projet", e.target.value ? Number(e.target.value) : null)}
+          className={inputCls}>
+          <option value="">Aucun projet</option>
+          {projects.map((p) => (
+            <option key={p.id_projet} value={p.id_projet}>#{p.id_projet} — {p.nom}</option>
+          ))}
+        </select>
+      </div>
+      {error && <p className="text-rose-400 text-sm">{error}</p>}
+    </Modal>
   );
 }
 

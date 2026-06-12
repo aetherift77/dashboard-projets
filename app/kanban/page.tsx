@@ -3,67 +3,21 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Statut =
-  | "Idée"
-  | "Definition"
-  | "Preparation"
-  | "Production"
-  | "Operationnel"
-  | "Maintenance"
-  | "Abandonne";
-
-type Priorite = "Low" | "Medium" | "High";
-
-interface Projet {
-  id_projet: number;
-  nom: string;
-  description: string | null;
-  statut: Statut;
-  priorite: Priorite;
-  localisation: string;
-  deadline: string | null;
-}
+import {
+  type Statut,
+  type Priorite,
+  type Projet,
+  type KanbanColonne,
+  KANBAN_COLONNES,
+  PRIORITE_COLORS,
+  PRIORITE_DOT,
+  isOverdue,
+  formatDateShort,
+} from "@/lib/types";
 
 interface EtapeStat {
   total: number;
   done: number;
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-const COLONNES: { statut: Statut; label: string; color: string; bg: string; border: string }[] = [
-  { statut: "Idée",         label: "💡 Idée",         color: "text-slate-300",   bg: "bg-slate-800/40",    border: "border-slate-700/50" },
-  { statut: "Definition",   label: "📋 Définition",   color: "text-indigo-300",  bg: "bg-indigo-900/20",   border: "border-indigo-800/40" },
-  { statut: "Preparation",  label: "🔧 Préparation",  color: "text-violet-300",  bg: "bg-violet-900/20",   border: "border-violet-800/40" },
-  { statut: "Production",   label: "⚡ Production",   color: "text-amber-300",   bg: "bg-amber-900/20",    border: "border-amber-800/40" },
-  { statut: "Operationnel", label: "✅ Opérationnel", color: "text-emerald-300", bg: "bg-emerald-900/20",  border: "border-emerald-800/40" },
-  { statut: "Maintenance",  label: "🔄 Maintenance",  color: "text-teal-300",    bg: "bg-teal-900/20",     border: "border-teal-800/40" },
-  { statut: "Abandonne",    label: "🗃 Abandonné",    color: "text-zinc-500",    bg: "bg-zinc-800/20",     border: "border-zinc-700/30" },
-];
-
-const PRIORITE_COLORS: Record<Priorite, string> = {
-  Low:    "bg-zinc-700/60 text-zinc-400",
-  Medium: "bg-amber-900/50 text-amber-300",
-  High:   "bg-rose-900/50 text-rose-300",
-};
-
-const PRIORITE_DOT: Record<Priorite, string> = {
-  Low: "bg-zinc-500", Medium: "bg-amber-400", High: "bg-rose-400",
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function isOverdue(deadline: string | null): boolean {
-  if (!deadline) return false;
-  return new Date(deadline) < new Date();
-}
-
-function formatDate(d: string | null): string {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
 }
 
 // ─── Kanban Card ──────────────────────────────────────────────────────────────
@@ -149,7 +103,7 @@ function KanbanCard({
               ? "bg-rose-900/50 text-rose-300"
               : "bg-zinc-800 text-zinc-500"
           }`}>
-            {overdue && "⚠ "}{formatDate(projet.deadline)}
+            {overdue && "⚠ "}{formatDateShort(projet.deadline)}
           </span>
         )}
 
@@ -253,7 +207,7 @@ function KanbanColumn({
   onDrop,
   onQuickCreate,
 }: {
-  col: (typeof COLONNES)[number];
+  col: KanbanColonne;
   projets: Projet[];
   etapeStats: Record<number, EtapeStat>;
   draggingId: number | null;
@@ -455,7 +409,7 @@ export default function KanbanPage() {
     return true;
   });
 
-  const visibleColonnes = COLONNES.filter((c) => !hiddenStatuts.has(c.statut));
+  const visibleColonnes = KANBAN_COLONNES.filter((c) => !hiddenStatuts.has(c.statut));
 
   // ── Stats ────────────────────────────────────────────────────────────────
 
@@ -515,7 +469,7 @@ export default function KanbanPage() {
         {/* Column toggles */}
         <div className="px-6 pb-2 flex items-center gap-2 overflow-x-auto">
           <span className="text-[10px] text-zinc-600 shrink-0">Colonnes :</span>
-          {COLONNES.map((col) => {
+          {KANBAN_COLONNES.map((col) => {
             const hidden = hiddenStatuts.has(col.statut);
             return (
               <button
