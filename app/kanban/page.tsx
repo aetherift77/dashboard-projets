@@ -27,6 +27,11 @@ interface Projet {
   deadline: string | null;
 }
 
+interface EtapeStat {
+  total: number;
+  done: number;
+}
+
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const COLONNES: { statut: Statut; label: string; color: string; bg: string; border: string }[] = [
@@ -65,16 +70,19 @@ function formatDate(d: string | null): string {
 
 function KanbanCard({
   projet,
+  etapeStat,
   onDragStart,
   onDragEnd,
   isDragging,
 }: {
   projet: Projet;
+  etapeStat?: EtapeStat;
   onDragStart: (p: Projet) => void;
   onDragEnd: () => void;
   isDragging: boolean;
 }) {
   const overdue = isOverdue(projet.deadline);
+  const allDone = etapeStat && etapeStat.total > 0 && etapeStat.done === etapeStat.total;
 
   return (
     <div
@@ -118,6 +126,22 @@ function KanbanCard({
           {projet.priorite}
         </span>
 
+        {/* Étapes */}
+        {etapeStat && etapeStat.total > 0 && (
+          <span
+            title={`${etapeStat.done} étape(s) terminée(s) sur ${etapeStat.total}`}
+            className={`inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
+              allDone ? "bg-emerald-900/50 text-emerald-300" : "bg-zinc-800 text-zinc-400"
+            }`}
+          >
+            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            {etapeStat.done}/{etapeStat.total}
+          </span>
+        )}
+
         {/* Deadline */}
         {projet.deadline && (
           <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium ${
@@ -136,11 +160,90 @@ function KanbanCard({
   );
 }
 
+// ─── Quick Add (création rapide depuis une colonne) ─────────────────────────────
+
+function QuickAdd({
+  statut, onCreate,
+}: {
+  statut: Statut;
+  onCreate: (statut: Statut, nom: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [nom, setNom] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    const v = nom.trim();
+    if (!v || saving) return;
+    setSaving(true);
+    await onCreate(statut, v);
+    setSaving(false);
+    setNom(""); // on garde le champ ouvert pour enchaîner les ajouts
+  }
+
+  function close() {
+    setOpen(false);
+    setNom("");
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-center gap-1 py-2 rounded-lg border border-dashed border-zinc-700/70 text-zinc-600 hover:text-zinc-300 hover:border-zinc-600 text-xs transition-colors"
+      >
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/>
+        </svg>
+        Ajouter
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-zinc-900 border border-indigo-500/40 rounded-xl p-2 space-y-2">
+      <input
+        autoFocus
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") submit();
+          if (e.key === "Escape") close();
+        }}
+        placeholder="Nom du projet"
+        className="w-full bg-zinc-800 border border-zinc-700 text-zinc-100 text-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+      />
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={submit}
+          disabled={saving || !nom.trim()}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors disabled:opacity-50"
+        >
+          {saving && (
+            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+          )}
+          Ajouter
+        </button>
+        <button
+          onClick={close}
+          className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs transition-colors"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Kanban Column ────────────────────────────────────────────────────────────
 
 function KanbanColumn({
   col,
   projets,
+  etapeStats,
   draggingId,
   dragOverStatut,
   onDragStart,
@@ -148,9 +251,11 @@ function KanbanColumn({
   onDragOver,
   onDragLeave,
   onDrop,
+  onQuickCreate,
 }: {
   col: (typeof COLONNES)[number];
   projets: Projet[];
+  etapeStats: Record<number, EtapeStat>;
   draggingId: number | null;
   dragOverStatut: Statut | null;
   onDragStart: (p: Projet) => void;
@@ -158,6 +263,7 @@ function KanbanColumn({
   onDragOver: (s: Statut) => void;
   onDragLeave: () => void;
   onDrop: (s: Statut) => void;
+  onQuickCreate: (statut: Statut, nom: string) => Promise<void>;
 }) {
   const isOver = dragOverStatut === col.statut;
 
@@ -191,6 +297,7 @@ function KanbanColumn({
           <KanbanCard
             key={p.id_projet}
             projet={p}
+            etapeStat={etapeStats[p.id_projet]}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             isDragging={draggingId === p.id_projet}
@@ -199,10 +306,13 @@ function KanbanColumn({
 
         {/* Empty state */}
         {projets.length === 0 && !isOver && (
-          <div className="flex items-center justify-center h-16">
+          <div className="flex items-center justify-center h-12">
             <p className="text-xs text-zinc-700">Déposer ici</p>
           </div>
         )}
+
+        {/* Quick add */}
+        <QuickAdd statut={col.statut} onCreate={onQuickCreate} />
       </div>
     </div>
   );
@@ -212,6 +322,7 @@ function KanbanColumn({
 
 export default function KanbanPage() {
   const [projets, setProjets] = useState<Projet[]>([]);
+  const [etapeStats, setEtapeStats] = useState<Record<number, EtapeStat>>({});
   const [loading, setLoading] = useState(true);
   const [filterPriorite, setFilterPriorite] = useState<Priorite | "all">("all");
   const [search, setSearch] = useState("");
@@ -225,16 +336,43 @@ export default function KanbanPage() {
   // ── Fetch ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    async function fetch() {
+    async function load() {
       const { data } = await supabase
         .from("projets")
         .select("id_projet, nom, description, statut, priorite, localisation, deadline")
         .order("id_projet", { ascending: true });
       setProjets((data as Projet[]) ?? []);
+
+      const { data: etapesData } = await supabase
+        .from("etapes")
+        .select("id_projet, statut");
+      const map: Record<number, EtapeStat> = {};
+      ((etapesData as { id_projet: number | null; statut: string }[]) ?? []).forEach((e) => {
+        if (e.id_projet == null) return;
+        const m = map[e.id_projet] ?? { total: 0, done: 0 };
+        m.total += 1;
+        if (e.statut === "termine") m.done += 1;
+        map[e.id_projet] = m;
+      });
+      setEtapeStats(map);
+
       setLoading(false);
     }
-    fetch();
+    load();
   }, []);
+
+  // ── Quick create ──────────────────────────────────────────────────────────
+
+  async function handleQuickCreate(statut: Statut, nom: string) {
+    const { data, error } = await supabase
+      .from("projets")
+      .insert([{ nom, description: null, statut, priorite: "Medium",
+        localisation: "indetermine", deadline: null } as any])
+      .select("id_projet, nom, description, statut, priorite, localisation, deadline")
+      .single();
+    if (error) { alert(`Erreur : ${error.message}`); return; }
+    setProjets((prev) => [...prev, data as Projet]);
+  }
 
   // ── Drag handlers ────────────────────────────────────────────────────────
 
@@ -409,6 +547,7 @@ export default function KanbanPage() {
                 key={col.statut}
                 col={col}
                 projets={filtered.filter((p) => p.statut === col.statut)}
+                etapeStats={etapeStats}
                 draggingId={draggingProjet?.id_projet ?? null}
                 dragOverStatut={dragOverStatut}
                 onDragStart={handleDragStart}
@@ -416,6 +555,7 @@ export default function KanbanPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
+                onQuickCreate={handleQuickCreate}
               />
             ))}
           </div>
