@@ -20,8 +20,7 @@ interface EtapeStat {
   done: number;
 }
 
-// ─── Kanban Card ──────────────────────────────────────────────────────────────
-
+// Kanban Card
 function KanbanCard({
   projet,
   etapeStat,
@@ -114,8 +113,7 @@ function KanbanCard({
   );
 }
 
-// ─── Quick Add (création rapide depuis une colonne) ─────────────────────────────
-
+// Quick Add (création rapide depuis une colonne)
 function QuickAdd({
   statut, onCreate,
 }: {
@@ -192,8 +190,7 @@ function QuickAdd({
   );
 }
 
-// ─── Kanban Column ────────────────────────────────────────────────────────────
-
+// Kanban Column
 function KanbanColumn({
   col,
   projets,
@@ -272,8 +269,7 @@ function KanbanColumn({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// Main Page
 export default function KanbanPage() {
   const [projets, setProjets] = useState<Projet[]>([]);
   const [etapeStats, setEtapeStats] = useState<Record<number, EtapeStat>>({});
@@ -287,8 +283,7 @@ export default function KanbanPage() {
   const [dragOverStatut, setDragOverStatut] = useState<Statut | null>(null);
   const savingRef = useRef(false);
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
-
+  // Fetch
   useEffect(() => {
     async function load() {
       const { data } = await dbSelect<Projet[]>("projets", {
@@ -315,8 +310,7 @@ export default function KanbanPage() {
     load();
   }, []);
 
-  // ── Quick create ──────────────────────────────────────────────────────────
-
+  // Quick create
   async function handleQuickCreate(statut: Statut, nom: string) {
     const { data, error } = await dbInsert<Projet>("projets", [{
       nom, description: null, statut, priorite: "Medium",
@@ -326,8 +320,7 @@ export default function KanbanPage() {
     setProjets((prev) => [...prev, data as Projet]);
   }
 
-  // ── Drag handlers ────────────────────────────────────────────────────────
-
+  // Drag handlers
   function handleDragStart(p: Projet) {
     setDraggingProjet(p);
   }
@@ -387,8 +380,7 @@ export default function KanbanPage() {
     savingRef.current = false;
   }
 
-  // ── Toggle column visibility ─────────────────────────────────────────────
-
+  // Toggle column visibility
   function toggleColonne(statut: Statut) {
     setHiddenStatuts((prev) => {
       const next = new Set(prev);
@@ -398,8 +390,7 @@ export default function KanbanPage() {
     });
   }
 
-  // ── Filter ───────────────────────────────────────────────────────────────
-
+  // Filter
   const filtered = projets.filter((p) => {
     if (filterPriorite !== "all" && p.priorite !== filterPriorite) return false;
     if (search && !p.nom.toLowerCase().includes(search.toLowerCase())) return false;
@@ -408,8 +399,7 @@ export default function KanbanPage() {
 
   const visibleColonnes = KANBAN_COLONNES.filter((c) => !hiddenStatuts.has(c.statut));
 
-  // ── Stats ────────────────────────────────────────────────────────────────
-
+  // Stats
   const stats = {
     total: projets.length,
     enCours: projets.filter((p) =>
@@ -418,8 +408,7 @@ export default function KanbanPage() {
     overdue: projets.filter((p) => p.deadline && isOverdue(p.deadline)).length,
   };
 
-  // ── Render ───────────────────────────────────────────────────────────────
-
+  // Render
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       {/* Header */}

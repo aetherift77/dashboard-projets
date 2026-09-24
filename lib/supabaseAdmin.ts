@@ -1,4 +1,3 @@
-// lib/supabaseAdmin.ts
 // Client Supabase SERVEUR avec la clé service_role. Ne JAMAIS importer côté client :
 // la clé service_role contourne RLS et ne doit jamais atteindre le navigateur.
 // Création paresseuse pour éviter toute évaluation au build sans variables d'env.

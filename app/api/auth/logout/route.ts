@@ -1,4 +1,3 @@
-// app/api/auth/logout/route.ts
 // Déconnexion (POST) : purge le cookie de session.
 
 import { NextResponse } from "next/server";

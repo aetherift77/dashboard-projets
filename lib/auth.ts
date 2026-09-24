@@ -1,4 +1,3 @@
-// lib/auth.ts
 // Helpers d'authentification ISOMORPHES (Edge runtime du proxy + Node runtime des routes).
 // On ne manipule JAMAIS le mot de passe ici : uniquement un jeton de session signé (HMAC-SHA256).
 // Implémentation basée sur Web Crypto (crypto.subtle), disponible côté Edge comme Node 20+.

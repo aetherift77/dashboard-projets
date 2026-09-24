@@ -1,4 +1,3 @@
-// app/api/push/subscribe/route.ts
 // Enregistre (ou supprime) un abonnement Web Push dans Supabase.
 
 import { NextResponse } from "next/server";

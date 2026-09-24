@@ -1,4 +1,3 @@
-// lib/notifications.ts
 // Helpers Web Push côté client (abonnement, permission).
 
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {

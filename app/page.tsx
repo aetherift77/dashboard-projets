@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 type Localisation = "indetermine" | "maison" | "apart" | "autre";
 type Statut =
   | "Idée"
@@ -28,8 +27,7 @@ interface Projet {
   deadline: string | null;
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-
+// Config
 const STATUTS: Statut[] = [
   "Idée", "Definition", "Preparation", "Production",
   "Operationnel", "Maintenance", "Abandonne",
@@ -58,8 +56,7 @@ const LOCALISATION_LABELS: Record<Localisation, string> = {
   autre:       "📍 Autre",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("fr-FR", {
@@ -72,8 +69,7 @@ function isOverdue(deadline: string | null): boolean {
   return new Date(deadline) < new Date();
 }
 
-// ─── Badge ────────────────────────────────────────────────────────────────────
-
+// Badge
 function Badge({ children, className }: { children: React.ReactNode; className: string }) {
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide ${className}`}>
@@ -82,8 +78,7 @@ function Badge({ children, className }: { children: React.ReactNode; className: 
   );
 }
 
-// ─── InlineSelect ─────────────────────────────────────────────────────────────
-
+// InlineSelect
 function InlineSelect<T extends string>({
   value, options, onChange, renderOption, className,
 }: {
@@ -107,8 +102,7 @@ function InlineSelect<T extends string>({
   );
 }
 
-// ─── InlineText ───────────────────────────────────────────────────────────────
-
+// InlineText
 function InlineText({
   value, onChange, placeholder, multiline, className,
 }: {
@@ -132,8 +126,7 @@ function InlineText({
   );
 }
 
-// ─── InlineDate ───────────────────────────────────────────────────────────────
-
+// InlineDate
 function InlineDate({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <input type="date" value={value} onChange={(e) => onChange(e.target.value)}
@@ -142,8 +135,7 @@ function InlineDate({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
-// ─── Project Row ──────────────────────────────────────────────────────────────
-
+// Project Row
 function ProjectRow({
   projet, onSave, onDelete,
 }: {
@@ -335,8 +327,7 @@ function ProjectRow({
   );
 }
 
-// ─── Create Modal ─────────────────────────────────────────────────────────────
-
+// Create Modal
 function CreateModal({
   onClose, onCreate,
 }: {
@@ -452,8 +443,7 @@ function CreateModal({
   );
 }
 
-// ─── Filter Bar ───────────────────────────────────────────────────────────────
-
+// Filter Bar
 function FilterBar({
   filterStatut, setFilterStatut, filterPriorite, setFilterPriorite,
   sortBy, setSortBy, search, setSearch, total,
@@ -502,8 +492,7 @@ function FilterBar({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// Main Page
 export default function DashboardPage() {
   const [projets, setProjets] = useState<Projet[]>([]);
   const [loading, setLoading] = useState(true);

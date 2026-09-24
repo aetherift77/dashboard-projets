@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 type StatutEtape = "todo" | "en_cours" | "bloque" | "termine";
 
 interface Etape {
@@ -24,8 +23,7 @@ interface Projet {
   statut: string;
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-
+// Config
 const STATUTS: StatutEtape[] = ["todo", "en_cours", "bloque", "termine"];
 
 const STATUT_CONFIG: Record<
@@ -77,8 +75,7 @@ const STATUT_CONFIG: Record<
   },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("fr-FR", {
@@ -93,8 +90,7 @@ function isOverdue(deadline: string | null, statut: StatutEtape): boolean {
   return new Date(deadline) < new Date();
 }
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
+// Progress bar
 function ProjectProgress({ etapes }: { etapes: Etape[] }) {
   if (etapes.length === 0) return null;
   const done = etapes.filter((e) => e.statut === "termine").length;
@@ -115,8 +111,7 @@ function ProjectProgress({ etapes }: { etapes: Etape[] }) {
   );
 }
 
-// ─── Etape Row ────────────────────────────────────────────────────────────────
-
+// Etape Row
 interface EtapeRowProps {
   etape: Etape;
   projets: Projet[];
@@ -401,8 +396,7 @@ function EtapeRow({ etape, projets, onSave, onDelete }: EtapeRowProps) {
   );
 }
 
-// ─── Create Etape Modal ───────────────────────────────────────────────────────
-
+// Create Etape Modal
 function CreateModal({
   projets,
   onClose,
@@ -522,8 +516,7 @@ function CreateModal({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// Main Page
 export default function EtapesPage() {
   const [etapes, setEtapes] = useState<Etape[]>([]);
   const [projets, setProjets] = useState<Projet[]>([]);
@@ -533,8 +526,7 @@ export default function EtapesPage() {
   const [filterStatut, setFilterStatut] = useState<StatutEtape | "all">("all");
   const [groupByProjet, setGroupByProjet] = useState(false);
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
-
+  // Fetch
   async function fetchAll() {
     setLoading(true);
     const [{ data: etapesData }, { data: projetsData }] = await Promise.all([
@@ -548,8 +540,7 @@ export default function EtapesPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
-  // ── Create ───────────────────────────────────────────────────────────────
-
+  // Create
   async function handleCreate(form: Omit<Etape, "id_etape" | "date_creation">) {
     const { data, error } = await dbInsert<Etape>("etapes", [{
       nom: form.nom,
@@ -565,8 +556,7 @@ export default function EtapesPage() {
     setShowCreate(false);
   }
 
-  // ── Save ─────────────────────────────────────────────────────────────────
-
+  // Save
   async function handleSave(updated: Etape) {
     const { error } = await dbUpdate("etapes", {
       nom: updated.nom,
@@ -583,24 +573,21 @@ export default function EtapesPage() {
     );
   }
 
-  // ── Delete ───────────────────────────────────────────────────────────────
-
+  // Delete
   async function handleDelete(id: number) {
     const { error } = await dbDelete("etapes", ["id_etape", id]);
     if (error) { alert(`Erreur : ${error}`); return; }
     setEtapes((prev) => prev.filter((e) => e.id_etape !== id));
   }
 
-  // ── Filter ───────────────────────────────────────────────────────────────
-
+  // Filter
   const filtered = etapes.filter((e) => {
     if (filterProjet !== "all" && e.id_projet !== filterProjet) return false;
     if (filterStatut !== "all" && e.statut !== filterStatut) return false;
     return true;
   });
 
-  // ── Stats ────────────────────────────────────────────────────────────────
-
+  // Stats
   const stats = {
     total: etapes.length,
     todo: etapes.filter((e) => e.statut === "todo").length,
@@ -609,8 +596,7 @@ export default function EtapesPage() {
     termine: etapes.filter((e) => e.statut === "termine").length,
   };
 
-  // ── Grouped render ────────────────────────────────────────────────────────
-
+  // Grouped render
   function renderGrouped() {
     const byProjet = new Map<number | null, Etape[]>();
     filtered.forEach((e) => {
@@ -645,8 +631,7 @@ export default function EtapesPage() {
     });
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
+  // Render
   const selectBase =
     "bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500";
 

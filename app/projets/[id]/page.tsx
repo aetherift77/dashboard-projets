@@ -5,8 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { dbSelect, dbInsert, dbUpdate, dbDelete } from "@/lib/db";
 import Link from "next/link";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 type Localisation = "indetermine" | "maison" | "apart" | "autre";
 type Statut =
   | "Idée"
@@ -42,8 +41,7 @@ interface Etape {
   date_fin: string | null;
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-
+// Config
 const STATUTS: Statut[] = [
   "Idée", "Definition", "Preparation", "Production",
   "Operationnel", "Maintenance", "Abandonne",
@@ -79,8 +77,7 @@ const ETAPE_STATUT: Record<StatutEtape, { label: string; color: string; dot: str
   termine:  { label: "Terminé",  color: "text-emerald-400", dot: "bg-emerald-400" },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 function fmt(d: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("fr-FR", {
@@ -93,8 +90,7 @@ function isOverdue(d: string | null) {
   return new Date(d) < new Date();
 }
 
-// ─── Section ──────────────────────────────────────────────────────────────────
-
+// Section
 function Section({ title, children, action }: {
   title: string;
   children: React.ReactNode;
@@ -111,8 +107,7 @@ function Section({ title, children, action }: {
   );
 }
 
-// ─── Field ────────────────────────────────────────────────────────────────────
-
+// Field
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
@@ -122,8 +117,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// ─── Étape mini-row ───────────────────────────────────────────────────────────
-
+// Étape mini-row
 function EtapeMini({
   etape, onToggle, onDelete,
 }: {
@@ -176,8 +170,7 @@ function EtapeMini({
   );
 }
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
+// Progress bar
 function ProgressBar({ etapes }: { etapes: Etape[] }) {
   if (!etapes.length) return null;
   const done = etapes.filter((e) => e.statut === "termine").length;
@@ -194,8 +187,7 @@ function ProgressBar({ etapes }: { etapes: Etape[] }) {
   );
 }
 
-// ─── Timeline ─────────────────────────────────────────────────────────────────
-
+// Timeline
 function Timeline({ projet, etapes }: { projet: Projet; etapes: Etape[] }) {
   const events: { date: string; label: string; type: "start" | "deadline" | "etape" }[] = [];
   if (projet.date_og) events.push({ date: projet.date_og, label: "Début du projet", type: "start" });
@@ -239,8 +231,7 @@ function Timeline({ projet, etapes }: { projet: Projet; etapes: Etape[] }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// Main Page
 export default function ProjetDetailPage() {
   const params = useParams();
   const id = Number(params.id);
@@ -369,7 +360,7 @@ export default function ProjetDetailPage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* ── Colonne gauche ─────────────────────────────────────────── */}
+          {/* Colonne gauche */}
           <div className="lg:col-span-2 space-y-6">
 
             {/* Infos */}
@@ -512,7 +503,7 @@ export default function ProjetDetailPage() {
             </Section>
           </div>
 
-          {/* ── Colonne droite ─────────────────────────────────────────── */}
+          {/* Colonne droite */}
           <div className="space-y-6">
 
             {/* Progression */}

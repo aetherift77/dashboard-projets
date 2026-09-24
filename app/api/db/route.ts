@@ -1,4 +1,3 @@
-// app/api/db/route.ts
 // Proxy de données AUTHENTIFIÉ. Le client n'accède plus à Supabase directement :
 // il passe par cette route, qui vérifie le cookie de session puis exécute la requête
 // avec la clé service_role (côté serveur uniquement). RLS peut donc bloquer tout accès

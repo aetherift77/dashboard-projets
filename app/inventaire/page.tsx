@@ -13,8 +13,7 @@ import {
   LOCALISATION_COLORS,
 } from "@/lib/types";
 
-// ─── Inline inputs ────────────────────────────────────────────────────────────
-
+// Inline inputs
 function InlineText({
   value, onChange, placeholder, multiline, className,
 }: {
@@ -80,8 +79,7 @@ function ProjetSelect({
   );
 }
 
-// ─── Item Row ─────────────────────────────────────────────────────────────────
-
+// Item Row
 function ItemRow({
   item, projectsMap, projects, onSave, onDelete,
 }: {
@@ -238,8 +236,7 @@ function ItemRow({
   );
 }
 
-// ─── Create Modal ─────────────────────────────────────────────────────────────
-
+// Create Modal
 function CreateModal({
   projects, onClose, onCreate,
 }: {
@@ -335,8 +332,7 @@ function CreateModal({
   );
 }
 
-// ─── Filter Bar ───────────────────────────────────────────────────────────────
-
+// Filter Bar
 function FilterBar({
   filterLoc, setFilterLoc, filterProjet, setFilterProjet,
   sortBy, setSortBy, search, setSearch, projects, total,
@@ -385,8 +381,7 @@ function FilterBar({
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
+// Main Page
 export default function InventairePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [projects, setProjects] = useState<ProjetRef[]>([]);

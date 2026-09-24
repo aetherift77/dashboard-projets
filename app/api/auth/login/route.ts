@@ -1,4 +1,3 @@
-// app/api/auth/login/route.ts
 // Route de connexion (POST). Tourne en Node runtime pour utiliser scrypt natif (zéro dépendance).
 // Sécurités : vérif mot de passe par scrypt + comparaison à temps constant, rate-limiting
 // avec lockout par IP, contrôle d'Origin (anti-CSRF), cookie httpOnly/secure/sameSite=strict.

@@ -1,4 +1,3 @@
-// app/api/cron/deadlines/route.ts
 // Tâche planifiée (Vercel Cron) : envoie une notification push résumée pour les
 // projets en retard ou dont la deadline tombe dans les 3 prochains jours.
 // Protégé par CRON_SECRET (Vercel Cron envoie Authorization: Bearer <CRON_SECRET>).

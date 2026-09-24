@@ -1,4 +1,3 @@
-// lib/db.ts
 // Helpers CLIENT pour accéder aux données via la route authentifiée /api/db.
 // Remplacent les appels directs à Supabase côté navigateur.
 // Tous renvoient { data, error } où `error` est une chaîne (ou null).

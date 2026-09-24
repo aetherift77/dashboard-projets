@@ -1,9 +1,7 @@
-// lib/types.ts
 // Source unique des types métier et de la configuration partagée (couleurs, libellés, helpers).
 // Importé par les pages (dashboard, kanban, inventaire, étapes…) pour éviter la duplication.
 
-// ─── Types métier ─────────────────────────────────────────────────────────────
-
+// Types métier
 export type Statut =
   | "Idée"
   | "Definition"
@@ -56,8 +54,7 @@ export interface ProjetRef {
   nom: string;
 }
 
-// ─── Listes ───────────────────────────────────────────────────────────────────
-
+// Listes
 export const STATUTS: Statut[] = [
   "Idée", "Definition", "Preparation", "Production",
   "Operationnel", "Maintenance", "Abandonne",
@@ -69,8 +66,7 @@ export const LOCALISATIONS: Localisation[] = ["indetermine", "maison", "apart", 
 
 export const ETAPE_STATUTS: EtapeStatut[] = ["todo", "en_cours", "bloque", "termine"];
 
-// ─── Couleurs & libellés ──────────────────────────────────────────────────────
-
+// Couleurs & libellés
 export const STATUT_COLORS: Record<Statut, string> = {
   Idée:         "bg-slate-700 text-slate-200",
   Definition:   "bg-indigo-900/70 text-indigo-300",
@@ -107,8 +103,7 @@ export const LOCALISATION_COLORS: Record<Localisation, string> = {
   autre:       "bg-amber-900/70 text-amber-300",
 };
 
-// ─── Config Kanban ────────────────────────────────────────────────────────────
-
+// Config Kanban
 export interface KanbanColonne {
   statut: Statut;
   label: string;
@@ -127,8 +122,7 @@ export const KANBAN_COLONNES: KanbanColonne[] = [
   { statut: "Abandonne",    label: "🗃 Abandonné",    color: "text-zinc-500",    bg: "bg-zinc-800/20",    border: "border-zinc-700/30" },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
+// Helpers
 export function isOverdue(deadline: string | null): boolean {
   if (!deadline) return false;
   return new Date(deadline) < new Date();
