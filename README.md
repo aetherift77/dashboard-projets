@@ -26,51 +26,10 @@ npm install
 
 ### 2. Créer un projet Supabase
 
-Crée un projet sur [supabase.com](https://supabase.com), puis exécute ce SQL
-(Dashboard Supabase → SQL Editor) :
-
-```sql
-CREATE TABLE projets (
-  id_projet    BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  nom          TEXT NOT NULL,
-  description  TEXT,
-  notes        TEXT,
-  localisation TEXT CHECK (localisation IN ('indetermine','maison','apart','autre')) DEFAULT 'indetermine',
-  statut       TEXT CHECK (statut IN ('Idée','Definition','Preparation','Production','Operationnel','Maintenance','Abandonne')) NOT NULL,
-  priorite     TEXT CHECK (priorite IN ('Low','Medium','High')) NOT NULL,
-  date_og      DATE DEFAULT CURRENT_DATE,
-  deadline     DATE
-);
-
-CREATE TABLE inventaire (
-  id_objet     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  nom          TEXT NOT NULL,
-  description  TEXT,
-  nb           INT NOT NULL DEFAULT 1,
-  localisation TEXT CHECK (localisation IN ('indetermine','maison','apart','autre')) DEFAULT 'indetermine',
-  id_projet    BIGINT REFERENCES projets(id_projet) ON DELETE SET NULL
-);
-
-CREATE TABLE etapes (
-  id_etape      BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  id_projet     BIGINT REFERENCES projets(id_projet) ON DELETE CASCADE,
-  nom           TEXT NOT NULL,
-  description   TEXT,
-  statut        TEXT CHECK (statut IN ('todo','en_cours','bloque','termine')) DEFAULT 'todo',
-  date_creation DATE DEFAULT CURRENT_DATE,
-  deadline      DATE,
-  date_fin      DATE
-);
-
-CREATE TABLE push_subscriptions (
-  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  endpoint    TEXT NOT NULL UNIQUE,
-  p256dh      TEXT NOT NULL,
-  auth        TEXT NOT NULL,
-  user_agent  TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+Créer un projet sur [supabase.com](https://supabase.com), puis créer les tables du
+dashboard dans le SQL Editor : `projets`, `etapes`, `inventaire` et `push_subscriptions`.
+Le détail des colonnes se trouve directement dans le code du projet
+(`lib/types.ts` et `app/api/db`).
 
 ### 3. Activer RLS (verrouiller la base)
 
